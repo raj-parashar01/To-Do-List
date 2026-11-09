@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management App</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>My To-Do List</h1>
+        <p>Manage your daily tasks easily</p>
+    </header>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+
+        <div class="card">
+            <h3>Total Tasks</h3>
+            <p>{{ total }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Completed</h3>
+            <p>{{ completed }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Pending</h3>
+            <p>{{ pending }}</p>
+        </div>
+
+    </div>
+
+    <!-- Add / Update Task -->
+    <div class="add-task">
+
+        <h2 id="form-heading">Add New Task</h2>
+
+        <form id="task-form" action="{{ url_for('add_task') }}" method="POST">
+
+            <input
+                type="text"
+                id="task-input"
+                name="task"
+                placeholder="Enter your task..."
+                required
+            >
+
+            <button type="submit" id="submit-btn">Add Task</button>
+
+            <button
+                type="button"
+                id="cancel-btn"
+                style="display:none; background:#64748b; color:white;"
+                onclick="cancelEdit()"
+            >
+                Cancel
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- Task List -->
+    <div class="task-section">
+
+        <h2>My Tasks</h2>
+
+        {% if tasks %}
+
+            {% for task in tasks %}
+
+                <div class="task {% if task['completed'] %}completed{% endif %}">
+
+                    <div class="task-info">
+
+                        <span class="task-title">
+                            {{ task['title'] }}
+                        </span>
+
+                        {% if task['completed'] %}
+                            <span class="status">Completed</span>
+                        {% else %}
+                            <span class="status">Pending</span>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="task-actions">
+
+                        <!-- Complete / Undo -->
+                        <form
+                            action="{{ url_for('toggle_task', task_id=task['id']) }}"
+                            method="POST"
+                        >
+                            <button type="submit" class="complete-btn">
+                                {% if task['completed'] %}
+                                    Undo
+                                {% else %}
+                                    Complete
+                                {% endif %}
+                            </button>
+                        </form>
+
+                        <!-- Edit Button -->
+                        <button
+                            type="button"
+                            class="edit-btn"
+                            data-task-id="{{ task['id'] }}"
+                            data-task-title="{{ task['title'] }}"
+                            onclick="editTask(this.dataset.taskId, this.dataset.taskTitle)"
+                        >
+                            Edit
+                        </button>
+
+                        <!-- Delete -->
+                        <form
+                            action="{{ url_for('delete_task', task_id=task['id']) }}"
+                            method="POST"
+                            onsubmit="return confirm('Are you sure you want to delete this task?');"
+                        >
+                            <button type="submit" class="delete-btn">
+                                Delete
+                            </button>
+                        </form>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <p class="empty-message">
+                No tasks available. Add your first task!
+            </p>
+
+        {% endif %}
+
+    </div>
+
+    <footer>
+        <p>Task Management System | Built with Python, Flask & SQLite</p>
+    </footer>
+
+</div>
+
+<script>
+
+    function editTask(id, title) {
+
+        const form = document.getElementById("task-form");
+
+        document.getElementById("task-input").value = title;
+
+        form.action = "/edit/" + id;
+
+        document.getElementById("form-heading").innerText = "Update Task";
+
+        document.getElementById("submit-btn").innerText = "Update Task";
+
+        document.getElementById("cancel-btn").style.display = "inline-block";
+
+        document.getElementById("task-input").focus();
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+    }
+
+    function cancelEdit() {
+
+        const form = document.getElementById("task-form");
+
+        form.action = "{{ url_for('add_task') }}";
+
+        document.getElementById("task-input").value = "";
+
+        document.getElementById("form-heading").innerText = "Add New Task";
+
+        document.getElementById("submit-btn").innerText = "Add Task";
+
+        document.getElementById("cancel-btn").style.display = "none";
+
+    }
+
+</script>
+
+</body>
+</html>

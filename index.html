@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Management App</title>
+    <title>My Task Manager</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -15,11 +15,13 @@
 <div class="container">
 
     <header>
-        <h1>My To-Do List</h1>
-        <p>Manage your daily tasks easily</p>
-    </header>
+        <h1>My Task Manager</h1>
+        <p>Stay organized and get things done.</p>
+        <button type="button" id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">
+    🌙 Dark Mode
+</button>
+</header>
 
-    <!-- Dashboard -->
     <div class="dashboard">
 
         <div class="card">
@@ -33,16 +35,15 @@
         </div>
 
         <div class="card">
-            <h3>Pending</h3>
+            <h3>Remaining</h3>
             <p>{{ pending }}</p>
         </div>
 
     </div>
 
-    <!-- Add / Update Task -->
     <div class="add-task">
 
-        <h2 id="form-heading">Add New Task</h2>
+        <h2 id="form-heading">Add a Task</h2>
 
         <form id="task-form" action="{{ url_for('add_task') }}" method="POST">
 
@@ -50,8 +51,9 @@
                 type="text"
                 id="task-input"
                 name="task"
-                placeholder="Enter your task..."
+                placeholder="What do you need to do?"
                 required
+                autocomplete="off"
             >
 
             <button type="submit" id="submit-btn">Add Task</button>
@@ -59,7 +61,7 @@
             <button
                 type="button"
                 id="cancel-btn"
-                style="display:none; background:#64748b; color:white;"
+                style="display: none; background: #64748b; color: white;"
                 onclick="cancelEdit()"
             >
                 Cancel
@@ -69,7 +71,6 @@
 
     </div>
 
-    <!-- Task List -->
     <div class="task-section">
 
         <h2>My Tasks</h2>
@@ -86,17 +87,18 @@
                             {{ task['title'] }}
                         </span>
 
-                        {% if task['completed'] %}
-                            <span class="status">Completed</span>
-                        {% else %}
-                            <span class="status">Pending</span>
-                        {% endif %}
+                        <span class="status">
+                            {% if task['completed'] %}
+                                Completed
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        </span>
 
                     </div>
 
                     <div class="task-actions">
 
-                        <!-- Complete / Undo -->
                         <form
                             action="{{ url_for('toggle_task', task_id=task['id']) }}"
                             method="POST"
@@ -110,22 +112,20 @@
                             </button>
                         </form>
 
-                        <!-- Edit Button -->
                         <button
                             type="button"
                             class="edit-btn"
                             data-task-id="{{ task['id'] }}"
-                            data-task-title="{{ task['title'] }}"
-                            onclick="editTask(this.dataset.taskId, this.dataset.taskTitle)"
+                            data-task-title="{{ task['title'] | e }}"
+                            onclick="editTask(this)"
                         >
                             Edit
                         </button>
 
-                        <!-- Delete -->
                         <form
                             action="{{ url_for('delete_task', task_id=task['id']) }}"
                             method="POST"
-                            onsubmit="return confirm('Are you sure you want to delete this task?');"
+                            onsubmit="return confirm('Do you want to delete this task?');"
                         >
                             <button type="submit" class="delete-btn">
                                 Delete
@@ -141,7 +141,7 @@
         {% else %}
 
             <p class="empty-message">
-                No tasks available. Add your first task!
+                Your task list is empty. Add something to get started!
             </p>
 
         {% endif %}
@@ -149,51 +149,94 @@
     </div>
 
     <footer>
-        <p>Task Management System | Built with Python, Flask & SQLite</p>
+        <p>My Task Manager | Developed using Python, Flask and SQLite</p>
     </footer>
 
 </div>
 
 <script>
 
-    function editTask(id, title) {
+    const taskForm = document.getElementById("task-form");
+    const taskInput = document.getElementById("task-input");
+    const heading = document.getElementById("form-heading");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
 
-        const form = document.getElementById("task-form");
+    const addTaskUrl = "{{ url_for('add_task') }}";
 
-        document.getElementById("task-input").value = title;
+    function editTask(button) {
 
-        form.action = "/edit/" + id;
+        const id = button.dataset.taskId;
+        const title = button.dataset.taskTitle;
 
-        document.getElementById("form-heading").innerText = "Update Task";
+        taskInput.value = title;
+        taskForm.action = "/edit/" + id;
 
-        document.getElementById("submit-btn").innerText = "Update Task";
+        heading.innerText = "Edit Your Task";
+        submitBtn.innerText = "Save Changes";
 
-        document.getElementById("cancel-btn").style.display = "inline-block";
+        cancelBtn.style.display = "inline-block";
 
-        document.getElementById("task-input").focus();
+        taskInput.focus();
 
         window.scrollTo({
             top: 0,
             behavior: "smooth"
         });
-
     }
 
     function cancelEdit() {
 
-        const form = document.getElementById("task-form");
+        taskForm.action = addTaskUrl;
 
-        form.action = "{{ url_for('add_task') }}";
+        taskInput.value = "";
 
-        document.getElementById("task-input").value = "";
+        heading.innerText = "Add a Task";
+        submitBtn.innerText = "Add Task";
 
-        document.getElementById("form-heading").innerText = "Add New Task";
+        cancelBtn.style.display = "none";
 
-        document.getElementById("submit-btn").innerText = "Add Task";
-
-        document.getElementById("cancel-btn").style.display = "none";
-
+        taskInput.focus();
     }
+
+// Theme Switcher
+
+const themeButton = document.getElementById("theme-toggle");
+
+function loadTheme() {
+
+    const savedTheme = localStorage.getItem("taskTheme");
+
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-mode");
+    }
+
+    updateThemeButton();
+}
+
+function updateThemeButton() {
+
+    if (document.body.classList.contains("dark-mode")) {
+        themeButton.innerText = "☀️ Light Mode";
+    } else {
+        themeButton.innerText = "🌙 Dark Mode";
+    }
+}
+
+function toggleTheme() {
+
+    document.body.classList.toggle("dark-mode");
+
+    const currentTheme = document.body.classList.contains("dark-mode")
+        ? "dark"
+        : "light";
+
+    localStorage.setItem("taskTheme", currentTheme);
+
+    updateThemeButton();
+}
+
+loadTheme();
 
 </script>
 

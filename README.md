@@ -1,4 +1,4 @@
-# To-Do-List
+
 # 📝 To-Do List Application
 
 A simple and lightweight To-Do List web application built using Python, SQLite, HTML, and CSS. It allows users to create, manage, and track daily tasks seamlessly.
